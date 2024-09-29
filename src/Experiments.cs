@@ -76,14 +76,6 @@ namespace AstreaArchipelago
             return true;
         }
 
-
-        [HarmonyPatch(typeof(EndOfBattleState), "AllRewardsCollectedGoToMapOrToAstreasGate")]
-        [HarmonyPostfix]
-        static void EndOfBattlePostFix(EndOfBattleState __instance)
-        {
-            Logger.LogInfo($"end of battle postfix called");
-        }
-
         [HarmonyPatch(typeof(BattleVictoryPanel), nameof(BattleVictoryPanel.Initialize))]
         [HarmonyPrefix]
         static bool BattleVictoryPanelPrefix(bool noReward, BattleVictoryPanel __instance)

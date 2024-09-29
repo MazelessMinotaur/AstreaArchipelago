@@ -200,8 +200,11 @@ namespace AstreaArchipelago
             NodeData node = state.mapHandler.CurrentNodeData;
             Logger.LogInfo("adding bonus rewards");
 
-            Logger.LogInfo("storing rewards");
-            storedRewards = state.mapHandler.currentReward.rewards;
+            if (storedRewards == null)
+            {
+                Logger.LogInfo("storing rewards");
+                storedRewards = state.mapHandler.currentReward.rewards;
+            }
 
             var tempList = state.mapHandler.currentReward.rewards.ToList();
             while(pendingRewards.Any())
@@ -214,6 +217,35 @@ namespace AstreaArchipelago
             return;
         }
 
+        [HarmonyPatch(typeof(EndOfBattleState), "AllRewardsCollectedGoToMapOrToAstreasGate")]
+        [HarmonyPostfix]
+        static void RestoreRewards(EndOfBattleState __instance)
+        {
+            Logger.LogInfo($"end of battle postfix called");
+
+            NodeEnum e = __instance.mapHandler.CurrentNodeData.NodeEnum;
+            if (e != NodeEnum.BATTLENORMAL && e != NodeEnum.BATTLEHARD && e != NodeEnum.BATTLEBOSS)
+            {
+                Logger.LogInfo($"not a battle node, skip returning rewards");
+                return;
+            }
+
+            if (storedRewards == null)
+            {
+                Logger.LogInfo($"no stored rewards?");
+                return;
+            }
+
+            Logger.LogInfo($"attempting to return old rewards");
+
+            __instance.mapHandler.currentReward.rewards = storedRewards;
+            storedRewards = null;
+            return;
+
+        }
+
+
+
         [HarmonyPatch(typeof(EndOfBattleState), "OnStartState")]
         [HarmonyPrefix]
         static bool EndOfBattlePrefix(EndOfBattleState __instance)
@@ -225,6 +257,14 @@ namespace AstreaArchipelago
             Logger.LogInfo($"end of battle {e}");
 
             Logger.LogInfo($"map info {m.GetCurrentAreaEnum()}");
+            
+            if (e != NodeEnum.BATTLENORMAL && e != NodeEnum.BATTLEHARD && e != NodeEnum.BATTLEBOSS)
+            {
+                Logger.LogInfo($"not a battle node, skip");
+                return true;
+            }
+
+            AddBonusRewards(__instance);
 
 
             if (node.Equals(lastNodeSeen))
@@ -233,24 +273,12 @@ namespace AstreaArchipelago
                 return true;
             }
             lastNodeSeen = node;
-
-            if (e != NodeEnum.BATTLENORMAL && e != NodeEnum.BATTLEHARD && e != NodeEnum.BATTLEBOSS)
-            {
-                Logger.LogInfo($"not a battle node, skip");
-                return true;
-            }
-
-
             
             System.Diagnostics.StackTrace t = new System.Diagnostics.StackTrace();
 
             Logger.LogInfo(t.ToString());
 
-
-            //Reward[] r = Resources.FindObjectsOfTypeAll<Reward>();
-
             CompleteLocatoinCheck(__instance);
-            AddBonusRewards(__instance);
 
             return true;
         }
