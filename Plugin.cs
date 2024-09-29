@@ -181,7 +181,6 @@ namespace AstreaArchipelago
 
             Logger.LogInfo($"reward length {r.Length}");
 
-
             for (int i = 0; i < r.Length; i++)
             {
                 Logger.LogInfo($"reward check, checking {r[i].RewardName}, getting {r[i].GetRewardName()}, target {targetReward}");
@@ -196,46 +195,16 @@ namespace AstreaArchipelago
             return null;
         }
 
-
-
-        [HarmonyPatch(typeof(PurifyAction), nameof(PurifyAction.CastTargetAmount))]
-        [HarmonyPrefix]
-        static bool PrefixPurify(GameObject target, int purifyAmount, GameObject source)
-        {
-            Logger.LogInfo($"Purify ?");
-
-            if (playerData != null)
-            {
-                playerData.ModifyGold(purifyAmount);
-            }
-
-            return true;
-        }
-
-
-        [HarmonyPatch(typeof(PlayerData), nameof(PlayerData.ModifyGold))]
-        [HarmonyPrefix]
-        static bool Prefix_DoubleGold(ref int amount, PlayerData __instance, object[] __args)
-        {
-            if (amount < 0)
-            {
-                return true;
-            }
-            Logger.LogInfo(amount);
-            amount *= 2;
-            Logger.LogInfo(amount);
-           
-            
-            return true;
-        }
-
         static void AddBonusRewards(EndOfBattleState state)
         {
             NodeData node = state.mapHandler.CurrentNodeData;
             Logger.LogInfo("adding bonus rewards");
 
-            Logger.LogInfo("storing rewards");
-            storedRewards = state.mapHandler.currentReward.rewards;
+            if (storedRewards == null)
+            {
+                Logger.LogInfo("storing rewards");
+                storedRewards = state.mapHandler.currentReward.rewards;
+            }
 
             var tempList = state.mapHandler.currentReward.rewards.ToList();
             while(pendingRewards.Any())
@@ -248,23 +217,34 @@ namespace AstreaArchipelago
             return;
         }
 
-        static void ReceiveReward(string rewardName)
+        [HarmonyPatch(typeof(EndOfBattleState), "AllRewardsCollectedGoToMapOrToAstreasGate")]
+        [HarmonyPostfix]
+        static void RestoreRewards(EndOfBattleState __instance)
         {
+            Logger.LogInfo($"end of battle postfix called");
+
+            NodeEnum e = __instance.mapHandler.CurrentNodeData.NodeEnum;
+            if (e != NodeEnum.BATTLENORMAL && e != NodeEnum.BATTLEHARD && e != NodeEnum.BATTLEBOSS)
+            {
+                Logger.LogInfo($"not a battle node, skip returning rewards");
+                return;
+            }
+
+            if (storedRewards == null)
+            {
+                Logger.LogInfo($"no stored rewards?");
+                return;
+            }
+
+            Logger.LogInfo($"attempting to return old rewards");
+
+            __instance.mapHandler.currentReward.rewards = storedRewards;
+            storedRewards = null;
+            return;
 
         }
 
-        [HarmonyPatch(typeof(ClearingReward), "GetNextReward")]
-        [HarmonyPrefix]
-        static bool ClearingInfo(ClearingReward __instance)
-        {
-            Logger.LogInfo($"Clearing Reward: {__instance.rewardsCounter}, ");
 
-            System.Diagnostics.StackTrace t = new System.Diagnostics.StackTrace();
-
-            Logger.LogInfo(t.ToString());
-
-            return true;
-        }
 
         [HarmonyPatch(typeof(EndOfBattleState), "OnStartState")]
         [HarmonyPrefix]
@@ -277,6 +257,14 @@ namespace AstreaArchipelago
             Logger.LogInfo($"end of battle {e}");
 
             Logger.LogInfo($"map info {m.GetCurrentAreaEnum()}");
+            
+            if (e != NodeEnum.BATTLENORMAL && e != NodeEnum.BATTLEHARD && e != NodeEnum.BATTLEBOSS)
+            {
+                Logger.LogInfo($"not a battle node, skip");
+                return true;
+            }
+
+            AddBonusRewards(__instance);
 
 
             if (node.Equals(lastNodeSeen))
@@ -285,24 +273,12 @@ namespace AstreaArchipelago
                 return true;
             }
             lastNodeSeen = node;
-
-            if (e != NodeEnum.BATTLENORMAL && e != NodeEnum.BATTLEHARD && e != NodeEnum.BATTLEBOSS)
-            {
-                Logger.LogInfo($"not a battle node, skip");
-                return true;
-            }
-
-
             
             System.Diagnostics.StackTrace t = new System.Diagnostics.StackTrace();
 
             Logger.LogInfo(t.ToString());
 
-
-            //Reward[] r = Resources.FindObjectsOfTypeAll<Reward>();
-
             CompleteLocatoinCheck(__instance);
-            AddBonusRewards(__instance);
 
             return true;
         }

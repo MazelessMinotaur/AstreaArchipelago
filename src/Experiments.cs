@@ -21,7 +21,7 @@ namespace AstreaArchipelago
 {
 
     // Class holding my random exerimenting of Astrea functions
-    // Should be mostly logging
+    // Should be mostly logging or minor alterations
     class Experiments
     {
         internal static new ManualLogSource Logger;
@@ -76,14 +76,6 @@ namespace AstreaArchipelago
             return true;
         }
 
-
-        [HarmonyPatch(typeof(EndOfBattleState), "AllRewardsCollectedGoToMapOrToAstreasGate")]
-        [HarmonyPostfix]
-        static void EndOfBattlePostFix(EndOfBattleState __instance)
-        {
-            Logger.LogInfo($"end of battle postfix called");
-        }
-
         [HarmonyPatch(typeof(BattleVictoryPanel), nameof(BattleVictoryPanel.Initialize))]
         [HarmonyPrefix]
         static bool BattleVictoryPanelPrefix(bool noReward, BattleVictoryPanel __instance)
@@ -126,5 +118,56 @@ namespace AstreaArchipelago
             return true;
         }
 
+
+        [HarmonyPatch(typeof(ClearingReward), "GetNextReward")]
+        [HarmonyPrefix]
+        static bool ClearingInfo(ClearingReward __instance)
+        {
+            Logger.LogInfo($"Clearing Reward: {__instance.rewardsCounter}, ");
+
+            System.Diagnostics.StackTrace t = new System.Diagnostics.StackTrace();
+
+            Logger.LogInfo(t.ToString());
+
+            return true;
+        }
+
+        [HarmonyPatch(typeof(PlayerData), nameof(PlayerData.ModifyGold))]
+        [HarmonyPrefix]
+        static bool Prefix_DoubleGold(ref int amount, PlayerData __instance, object[] __args)
+        {
+            if (amount < 0)
+            {
+                return true;
+            }
+            Logger.LogInfo(amount);
+            amount *= 2;
+            Logger.LogInfo(amount);
+
+
+            return true;
+        }
+
+
+
+
+        [HarmonyPatch(typeof(PurifyAction), nameof(PurifyAction.CastTargetAmount))]
+        [HarmonyPrefix]
+        static bool PrefixPurify(GameObject target, int purifyAmount, GameObject source)
+        {
+            Logger.LogInfo($"Purify {purifyAmount}");
+
+            PlayerData[] p = Resources.FindObjectsOfTypeAll<PlayerData>();
+
+            if (p.Length != 1)
+            {
+                Logger.LogInfo($"Some how there is not exactly 1 player data, {p.Length}");
+                return true;
+            }
+
+            p[0].ModifyGold(purifyAmount);
+
+            return true;
+        }
     }
 }
