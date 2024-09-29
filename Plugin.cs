@@ -181,7 +181,6 @@ namespace AstreaArchipelago
 
             Logger.LogInfo($"reward length {r.Length}");
 
-
             for (int i = 0; i < r.Length; i++)
             {
                 Logger.LogInfo($"reward check, checking {r[i].RewardName}, getting {r[i].GetRewardName()}, target {targetReward}");
@@ -194,39 +193,6 @@ namespace AstreaArchipelago
             Logger.LogInfo($"reward for item not found, id {item.ItemId}, name {item.ItemName}, target {targetReward}");
 
             return null;
-        }
-
-
-
-        [HarmonyPatch(typeof(PurifyAction), nameof(PurifyAction.CastTargetAmount))]
-        [HarmonyPrefix]
-        static bool PrefixPurify(GameObject target, int purifyAmount, GameObject source)
-        {
-            Logger.LogInfo($"Purify ?");
-
-            if (playerData != null)
-            {
-                playerData.ModifyGold(purifyAmount);
-            }
-
-            return true;
-        }
-
-
-        [HarmonyPatch(typeof(PlayerData), nameof(PlayerData.ModifyGold))]
-        [HarmonyPrefix]
-        static bool Prefix_DoubleGold(ref int amount, PlayerData __instance, object[] __args)
-        {
-            if (amount < 0)
-            {
-                return true;
-            }
-            Logger.LogInfo(amount);
-            amount *= 2;
-            Logger.LogInfo(amount);
-           
-            
-            return true;
         }
 
         static void AddBonusRewards(EndOfBattleState state)
@@ -246,24 +212,6 @@ namespace AstreaArchipelago
             state.mapHandler.currentReward.rewards = tempList.ToArray();
 
             return;
-        }
-
-        static void ReceiveReward(string rewardName)
-        {
-
-        }
-
-        [HarmonyPatch(typeof(ClearingReward), "GetNextReward")]
-        [HarmonyPrefix]
-        static bool ClearingInfo(ClearingReward __instance)
-        {
-            Logger.LogInfo($"Clearing Reward: {__instance.rewardsCounter}, ");
-
-            System.Diagnostics.StackTrace t = new System.Diagnostics.StackTrace();
-
-            Logger.LogInfo(t.ToString());
-
-            return true;
         }
 
         [HarmonyPatch(typeof(EndOfBattleState), "OnStartState")]
