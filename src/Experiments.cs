@@ -15,6 +15,8 @@ using Archipelago;
 using static System.Collections.Specialized.BitVector32;
 using Archipelago.MultiClient.Net.Models;
 using System.Linq;
+using AstreaArchipelago.src;
+using AstreaArchipelago.src.UI;
 
 
 namespace AstreaArchipelago
@@ -64,14 +66,23 @@ namespace AstreaArchipelago
         [HarmonyPrefix]
         static bool PrefixToggleBGM(bool toggle)
         {
-            Logger.LogInfo($"toggle aduio ${toggle}");
 
-            Reward[] r = Resources.FindObjectsOfTypeAll<Astrea.Reward>();
-            for (int i = 0; i < r.Length; i++)
-            {
-                Logger.LogInfo($"reward {i}, {r[i].RewardName}, {r[i].GetType()},");
-            }
 
+            //Astrea.CanvasControls
+            //Logger.LogInfo($"toggle aduio ${toggle}");
+
+            //Reward[] r = Resources.FindObjectsOfTypeAll<Astrea.Reward>();
+            //for (int i = 0; i < r.Length; i++)
+            //{
+            //    Logger.LogInfo($"reward {i}, {r[i].RewardName}, {r[i].GetType()},");
+            //}
+
+            ArchipelagoConfigMenu m = new ArchipelagoConfigMenu(Logger);
+            m.Load();
+            m.AddMenuButton();
+
+            GeneratedUI g = new GeneratedUI(Logger);
+            g.Start();
 
             return true;
         }
@@ -100,14 +111,7 @@ namespace AstreaArchipelago
 
 
 
-        [HarmonyPatch(typeof(MapHandler), "NodePressed")]
-        [HarmonyPrefix]
-        static bool NodePressedPrefix(int nodeIndex, int areaLevelIndex)
-        {
-            Logger.LogInfo($"map handler, node pressed: {areaLevelIndex}, {nodeIndex}, ");
 
-            return true;
-        }
 
         [HarmonyPatch(typeof(Node), "NodePressed")]
         [HarmonyPrefix]

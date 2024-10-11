@@ -17,6 +17,7 @@ using Archipelago.MultiClient.Net.Models;
 using System.Linq;
 using UnityEngine.Analytics;
 using System.Collections.ObjectModel;
+using AstreaArchipelago.src;
 
 namespace AstreaArchipelago
 {
@@ -40,6 +41,8 @@ namespace AstreaArchipelago
         static Queue<Reward> pendingRewards;
 
         static Dictionary<string, string> rewardNameMap = new Dictionary<string, string>();
+
+        static RewardService rewardService;
 
         private void Awake()
         {
@@ -68,6 +71,8 @@ namespace AstreaArchipelago
             {
                 Logger.LogInfo("session succesfully created ");
             }
+            rewardService = new RewardService(Logger);
+            rewardService.BuildRewardMap();
         }
 
         private void Connect()
@@ -123,7 +128,7 @@ namespace AstreaArchipelago
 
         static void SetUpRewardDict()
         {
-            // TODO move to a const file
+            // TODO has moved to RewardService
             rewardNameMap.Add("Epic Dice Choice", "Gain an Epic Die");
             rewardNameMap.Add("Standard Dice Choice", "2 Random Dice");
             rewardNameMap.Add("Regular Blessing", "Gain a Star Blessing");
@@ -134,8 +139,10 @@ namespace AstreaArchipelago
 
         static void ReceiveItem(ItemInfo item)
         {
+            Logger.LogInfo("item received");
             if (item == null)
             {
+                Logger.LogInfo("item null");
                 return;
             }
             Logger.LogInfo(item.ItemName);
@@ -147,13 +154,13 @@ namespace AstreaArchipelago
                 if (playerData != null)
                 {
                     // Yeah starshards are called gold.
-                    playerData.ModifyGold(77);
+                    playerData.ModifyGold(77); // this didn't work?
                 }
             }
 
 
             //Reward[] r = Resources.FindObjectsOfTypeAll<Astrea.Reward>();
-            Reward reward = BuildRewardFromItem(item);
+            Reward reward = rewardService.ArchipelagoItemToReward(item);
             if (reward == null)
             {
                 Logger.LogInfo($"failed to build reward from item");
@@ -245,6 +252,28 @@ namespace AstreaArchipelago
         }
 
 
+        [HarmonyPatch(typeof(MapHandler), "NodePressed")]
+        [HarmonyPrefix]
+        static bool NodePressedFromMapPrefix(int nodeIndex, int areaLevelIndex, MapHandler __instance)
+        {
+            Logger.LogInfo($"map handler, pre node pressed: {areaLevelIndex}, {nodeIndex}, ");
+            //rewardService.storeRewards(__instance);
+
+            return true;
+        }
+
+
+        [HarmonyPatch(typeof(MapHandler), "NodePressed")]
+        [HarmonyPostfix]
+        static void NodePressedFromMapPostFix(int nodeIndex, int areaLevelIndex, MapHandler __instance)
+        {
+            Logger.LogInfo($"map handler, post node pressed: {areaLevelIndex}, {nodeIndex}, ");
+            //rewardService.storeRewards(__instance);
+
+            return;
+        }
+
+
 
         [HarmonyPatch(typeof(EndOfBattleState), "OnStartState")]
         [HarmonyPrefix]
@@ -322,7 +351,7 @@ namespace AstreaArchipelago
                     session.Locations.CompleteLocationChecks(session.Locations.GetLocationIdFromName("Astrea", "Tainted Reef Fight 3 - Second reward"));
                     if (state.mapHandler.CurrentNodeData.NodeEnum == NodeEnum.BATTLEHARD)
                     {
-                        session.Locations.CompleteLocationChecks(session.Locations.GetLocationIdFromName("Astrea", "Tainted Reef Fight 3 - Hard reward"));
+                        session.Locations.CompleteLocationChecks(session.Locations.GetLocationIdFromName("Astrea", "Tainted Reef Fight 3 - Hard reward")); // this didn't work?
                     }
                     break;
                 case 4:
@@ -330,7 +359,41 @@ namespace AstreaArchipelago
                     session.Locations.CompleteLocationChecks(session.Locations.GetLocationIdFromName("Astrea", "Tainted Reef Boss Fight - Second reward"));
                     session.Locations.CompleteLocationChecks(session.Locations.GetLocationIdFromName("Astrea", "Tainted Reef Boss Fight - Third reward"));
                     break;
-
+                case 5:
+                    session.Locations.CompleteLocationChecks(session.Locations.GetLocationIdFromName("Astrea", "Astropolis Ruins Fight 1 - First reward"));
+                    session.Locations.CompleteLocationChecks(session.Locations.GetLocationIdFromName("Astrea", "Astropolis Ruins Fight 1 - Second reward"));
+                    break;
+                case 6:
+                    session.Locations.CompleteLocationChecks(session.Locations.GetLocationIdFromName("Astrea", "Astropolis Ruins Fight 2 - First reward"));
+                    session.Locations.CompleteLocationChecks(session.Locations.GetLocationIdFromName("Astrea", "Astropolis Ruins Fight 2 - Second reward"));
+                    if (state.mapHandler.CurrentNodeData.NodeEnum == NodeEnum.BATTLEHARD)
+                    {
+                        session.Locations.CompleteLocationChecks(session.Locations.GetLocationIdFromName("Astrea", "Astropolis Ruins Fight 2 - Hard reward")); // but this did?
+                    }
+                    break;
+                case 7:
+                    session.Locations.CompleteLocationChecks(session.Locations.GetLocationIdFromName("Astrea", "Astropolis Ruins Boss Fight - First reward")); // Tehse didn't trigger?
+                    session.Locations.CompleteLocationChecks(session.Locations.GetLocationIdFromName("Astrea", "Astropolis Ruins Boss Fight - Second reward"));
+                    session.Locations.CompleteLocationChecks(session.Locations.GetLocationIdFromName("Astrea", "Astropolis Ruins Boss Fight - Third reward"));
+                    break;
+                case 8:
+                    session.Locations.CompleteLocationChecks(session.Locations.GetLocationIdFromName("Astrea", "Ground Zero Fight 1 - First reward"));  //didnt' send either?
+                    session.Locations.CompleteLocationChecks(session.Locations.GetLocationIdFromName("Astrea", "Ground Zero Fight 1 - Second reward"));
+                    if (state.mapHandler.CurrentNodeData.NodeEnum == NodeEnum.BATTLEHARD)
+                    {
+                        session.Locations.CompleteLocationChecks(session.Locations.GetLocationIdFromName("Astrea", "Ground Zero Fight 1 - Hard reward"));
+                    }
+                    break;
+                case 9:
+                    session.Locations.CompleteLocationChecks(session.Locations.GetLocationIdFromName("Astrea", "Ground Zero Fight 2 - First reward")); //also no?
+                    session.Locations.CompleteLocationChecks(session.Locations.GetLocationIdFromName("Astrea", "Ground Zero Fight 2 - Second reward"));
+                    if (state.mapHandler.CurrentNodeData.NodeEnum == NodeEnum.BATTLEHARD)
+                    {
+                        session.Locations.CompleteLocationChecks(session.Locations.GetLocationIdFromName("Astrea", "Ground Zero Fight 2 - Hard reward"));
+                    }
+                    break;
+                case 10:
+                    break;
             }
         }
 
