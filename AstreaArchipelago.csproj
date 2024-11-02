@@ -28,6 +28,22 @@
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.2" PrivateAssets="all" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Using Include="UnityEngine.UI" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <Reference Include="UnityEngine.UI2">
+      <HintPath>$(DicePath)\Managed\UnityEngine.UI.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.UIModule">
+      <HintPath>$(DicePath)\Managed\UnityEngine.UIModule.dll</HintPath>
+    </Reference>
+    <Reference Include="Local.UnityEngine">
+      <HintPath>..\lib\UnityEngine.UI.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
 
   <ItemGroup>
     <PackageReference Include="BepInEx.AssemblyPublicizer.MSBuild" Version="0.4.0">
@@ -43,7 +59,7 @@
       <Assets Include="$(OutputPath)\assets\*.*" />
     </ItemGroup>
 
-    <Copy SourceFiles="@(Assembly)" DestinationFolder="$(DicePath)\BepInEx\plugins" />
+    <Copy SourceFiles="@(Assembly)" DestinationFolder="C:\Users\Ian\AppData\LocalLow\Little Leo Games\Astrea\YourModProjects\Mod 3\plugins" />
   </Target>
 
 </Project>
