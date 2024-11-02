@@ -29,7 +29,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Using Include="UnityEngine.UI"/>
+    <Using Include="UnityEngine.UI" />
   </ItemGroup>
   
   <ItemGroup>

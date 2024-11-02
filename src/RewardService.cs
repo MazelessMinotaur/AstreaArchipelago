@@ -18,13 +18,21 @@ namespace AstreaArchipelago.src
         List<Reward> basicHardBattleReward;
         List<Reward> basicBossBattleReward;
 
-        // 
+        // original list of rewards
         List<Reward> originalBattleReward;
         List<Reward> originalHardBattleReward;
         List<Reward> originalBossBattleReward;
 
         List<Reward>[] pendingRewards;
-        static Dictionary<string, string> rewardNameMap = null;
+        static Dictionary<string, string> rewardNameMap = rewardNameMap = new Dictionary<string, string>
+            {
+                { "Epic Dice Choice", "Gain an Epic Die" },
+                { "Standard Dice Choice", "GetLocalizedString failed. -> ID: Chest" }, // hate this
+                { "Regular Blessing", "Gain a Star Blessing" },
+                { "BlackHole Blessing", "GetLocalizedString failed. -> ID: Black Hole Blessing" }, // TODO make this better
+                { "Duplicate Dice", "Duplicate a non-Epic Die from your dice pool 1 times." },
+                { "Forge Draw", "Forge: Draw 2" },
+            };
         static Dictionary<string, Reward> rewardMap = null;
 
         public RewardService(ManualLogSource logger)
@@ -52,12 +60,14 @@ namespace AstreaArchipelago.src
 
         public Reward ArchipelagoItemToReward(ItemInfo item)
         {
+            Logger.LogInfo($"Start getting reward {item.ItemName}");
             string targetReward;
             if (!rewardNameMap.TryGetValue(item.ItemName, out targetReward))
             {
                 Logger.LogInfo($"item not found in map, id {item.ItemId}, name {item.ItemName}");
                 return null;
             }
+            Logger.LogInfo($"Got reward {targetReward}");
 
             if (rewardMap == null)
             {
@@ -68,8 +78,17 @@ namespace AstreaArchipelago.src
                 return null;
             }
 
+            Logger.LogInfo($"trying to get {targetReward} from map");
+
             Reward r = rewardMap[targetReward];
-            
+            if (r == null)
+            {
+                Logger.LogInfo($" no reward from map {targetReward} from map");
+            }
+            Logger.LogInfo($"got {r.name} from map");
+
+
+
             return r;
         }
 
@@ -78,6 +97,7 @@ namespace AstreaArchipelago.src
             Reward[] r = Resources.FindObjectsOfTypeAll<Reward>();
 
             Logger.LogInfo($"reward length {r.Length}");
+            rewardMap = new Dictionary<string, Reward>();
 
             for (int i = 0; i < r.Length; i++)
             {

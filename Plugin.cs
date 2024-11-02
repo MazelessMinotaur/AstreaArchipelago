@@ -18,6 +18,11 @@ using System.Linq;
 using UnityEngine.Analytics;
 using System.Collections.ObjectModel;
 using AstreaArchipelago.src;
+using System.Reflection;
+using AstreaArchipelago.src.UI;
+using AstreaArchipelago.src.Archipelago;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace AstreaArchipelago
 {
@@ -44,6 +49,8 @@ namespace AstreaArchipelago
 
         static RewardService rewardService;
 
+        static GameObject apui = null;
+
         private void Awake()
         {
             // Plugin startup logic
@@ -62,68 +69,49 @@ namespace AstreaArchipelago
             }
             SetUpRewardDict(); 
             Logger.LogInfo($"patching done!!!!a :)");
-            if (session != null)
-            {
-                Logger.LogInfo("session already created?");
-            }
-            Connect();
-            if (session != null)
-            {
-                Logger.LogInfo("session succesfully created ");
-            }
+            //if (session != null)
+            //{
+            //    Logger.LogInfo("session already created?");
+            //}
+            Setup();
+            //if (session != null)
+            //{
+            //    Logger.LogInfo("session succesfully created ");
+            //}
             rewardService = new RewardService(Logger);
             rewardService.BuildRewardMap();
+            CreateArchipelagoUI();
         }
 
-        private void Connect()
+        private void Setup()
         {
-            session = ArchipelagoSessionFactory.CreateSession("localhost", 38281);
+            if (APState.Session == null)
+            {
+                return;
+            }
 
+            if (session != null)
+            {
+                return;
+            }
+            session = APState.Session;
             pendingRewards = new Queue<Reward>();
 
-            Version v = new System.Version("0.5.0");
-            LoginResult result;
-            try
-            {
-                result = session.TryConnectAndLogin(
-                    "Astrea",
-                    "Astrea_test",
-                    ItemsHandlingFlags.AllItems,
-                    v
-                    );
-            } catch (Exception e)
-            {
-                result = new LoginFailure(e.GetBaseException().Message);
-            }
-
-            if (!result.Successful)
-            {
-                LoginFailure failure = (LoginFailure)result;
-                string errorMessage = $"Failed to Connect to";
-                foreach (string error in failure.Errors)
-                {
-                    errorMessage += $"\n    {error}";
-                }
-                foreach (ConnectionRefusedError error in failure.ErrorCodes)
-                {
-                    errorMessage += $"\n    {error}";
-                }
-
-                return; // Did not connect, show the user the contents of `errorMessage`
-            }
-
-
             session.Items.ItemReceived += (receivedItemsHelper) => {
+                Logger.LogInfo("running item received helper");
                 ItemInfo item = session.Items.DequeueItem();
                 ReceiveItem(item);
                 receivedItemsHelper.DequeueItem();
+                Logger.LogInfo("done receving?");
+
             };
             while (session.Items.Any())
             {
+                Logger.LogInfo("dequeue item");
+
                 ReceiveItem(session.Items.DequeueItem());
             }
 
-            var loginSuccess = (LoginSuccessful)result;
         }
 
         static void SetUpRewardDict()
@@ -224,8 +212,6 @@ namespace AstreaArchipelago
             return;
         }
 
-        [HarmonyPatch(typeof(EndOfBattleState), "AllRewardsCollectedGoToMapOrToAstreasGate")]
-        [HarmonyPostfix]
         static void RestoreRewards(EndOfBattleState __instance)
         {
             Logger.LogInfo($"end of battle postfix called");
@@ -250,6 +236,32 @@ namespace AstreaArchipelago
             return;
 
         }
+
+        public static void CreateArchipelagoUI()
+        {
+            if (APState.ArchipelagoUI != null)
+            {
+                Logger.LogInfo("skip");
+                return;
+            }
+            // Create a game object that will be responsible to drawing the IMGUI in the Menu.
+            var guiGameobject = new GameObject();
+            guiGameobject.SetActive(false);
+            APState.ArchipelagoUI = guiGameobject.AddComponent<APUI>();
+            GameObject.DontDestroyOnLoad(guiGameobject);
+
+            apui = guiGameobject;
+
+            //var storage = PlatformUtils.main.GetServices().GetUserStorage() as UserStoragePC;
+            //var rawPath = storage.GetType().GetField("savePath",
+            //    BindingFlags.NonPublic | BindingFlags.Instance).GetValue(storage);
+            //var lastConnectInfo = APLastConnectInfo.LoadFromFile(rawPath + "/archipelago_last_connection.json");
+            //if (lastConnectInfo != null)
+            //{
+            //    APState.ServerConnectInfo.FillFromLastConnect(lastConnectInfo);
+            //}
+        }
+
 
 
         [HarmonyPatch(typeof(MapHandler), "NodePressed")]
@@ -310,6 +322,21 @@ namespace AstreaArchipelago
             CompleteLocatoinCheck(__instance);
 
             return true;
+        }
+
+
+        void Update()
+        {
+            if (Input.GetKeyDown(KeyCode.F2))
+            {
+                if (APState.ArchipelagoUI == null)
+                {
+                    return;
+                }
+
+                apui.SetActive(!apui.activeSelf);
+                Setup();
+            }
         }
 
         static void CompleteLocatoinCheck(EndOfBattleState state)
