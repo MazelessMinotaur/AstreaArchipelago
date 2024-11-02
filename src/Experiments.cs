@@ -22,8 +22,9 @@ using AstreaArchipelago.src.UI;
 namespace AstreaArchipelago
 {
 
-    // Class holding my random exerimenting of Astrea functions
+    // Class holding random exerimenting of Astrea functions
     // Should be mostly logging or minor alterations
+    // porbably most of this should be removed or moved to other classes
     class Experiments
     {
         internal static new ManualLogSource Logger;
@@ -66,23 +67,6 @@ namespace AstreaArchipelago
         [HarmonyPrefix]
         static bool PrefixToggleBGM(bool toggle)
         {
-
-
-            //Astrea.CanvasControls
-            //Logger.LogInfo($"toggle aduio ${toggle}");
-
-            //Reward[] r = Resources.FindObjectsOfTypeAll<Astrea.Reward>();
-            //for (int i = 0; i < r.Length; i++)
-            //{
-            //    Logger.LogInfo($"reward {i}, {r[i].RewardName}, {r[i].GetType()},");
-            //}
-
-            //ArchipelagoConfigMenu m = new ArchipelagoConfigMenu(Logger);
-            //m.Load();
-            //m.AddMenuButton();
-
-            //GeneratedUI g = new GeneratedUI(Logger);
-            //g.Start();
             return true;
         }
 
@@ -108,10 +92,6 @@ namespace AstreaArchipelago
             return true;
         }
 
-
-
-
-
         [HarmonyPatch(typeof(Node), "NodePressed")]
         [HarmonyPrefix]
         static bool NodeInfo(Node __instance)
@@ -128,13 +108,10 @@ namespace AstreaArchipelago
         {
             Logger.LogInfo($"Clearing Reward: {__instance.rewardsCounter}, ");
 
-            System.Diagnostics.StackTrace t = new System.Diagnostics.StackTrace();
-
-            Logger.LogInfo(t.ToString());
-
             return true;
         }
 
+        // TODO move to options
         [HarmonyPatch(typeof(PlayerData), nameof(PlayerData.ModifyGold))]
         [HarmonyPrefix]
         static bool Prefix_DoubleGold(ref int amount, PlayerData __instance, object[] __args)
@@ -151,9 +128,7 @@ namespace AstreaArchipelago
             return true;
         }
 
-
-
-
+        // TODO move to options
         [HarmonyPatch(typeof(PurifyAction), nameof(PurifyAction.CastTargetAmount))]
         [HarmonyPrefix]
         static bool PrefixPurify(GameObject target, int purifyAmount, GameObject source)

@@ -39,7 +39,7 @@
     <Reference Include="UnityEngine.UIModule">
       <HintPath>$(DicePath)\Managed\UnityEngine.UIModule.dll</HintPath>
     </Reference>
-    <Reference Include="WhyTheFuck">
+    <Reference Include="Local.UnityEngine">
       <HintPath>..\lib\UnityEngine.UI.dll</HintPath>
     </Reference>
   </ItemGroup>

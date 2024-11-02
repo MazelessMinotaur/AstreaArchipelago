@@ -77,36 +77,9 @@ namespace AstreaArchipelago.src.Archipelago
 
             if (loginResult is LoginSuccessful loginSuccess)
             {
-                //var storage = PlatformUtils.main.GetServices().GetUserStorage() as UserStoragePC;
-                //var rawPath = storage?.GetType().GetField("savePath",
-                //        BindingFlags.NonPublic | BindingFlags.Instance)?.GetValue(storage);
-                //if (rawPath != null)
-                //{
-                //    ServerConnectInfo.GetAsLastConnect().WriteToFile(rawPath + "/archipelago_last_connection.json");
-                //} else
-                //{
-                //    Logging.LogError("Could not write most recent connect info to file.");
-                //}
 
                 Authenticated = true;
                 state = State.InGame;
-                //if (loginSuccess.SlotData.TryGetValue("swim_rule", out var swim_rule))
-                //{
-                //    SwimRule = (string)swim_rule;
-                //}
-                //if (loginSuccess.SlotData.TryGetValue("free_samples", out var free_samples))
-                //{
-                //    FreeSamples = Convert.ToInt32(free_samples) > 0;
-                //}
-                //Goal = (string)loginSuccess.SlotData["goal"];
-                //GoalMapping.TryGetValue(Goal, out GoalEvent);
-                //if (loginSuccess.SlotData["vanilla_tech"] is JArray temp)
-                //{
-                //    foreach (var tech in temp)
-                //    {
-                //        vanillaTech.Add((TechType)Enum.Parse(typeof(TechType), tech.ToString()));
-                //    }
-                //}
 
 
                 Logging.Log("SlotData: " + JsonConvert.SerializeObject(loginSuccess.SlotData), ingame: false);
