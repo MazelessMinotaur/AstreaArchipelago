@@ -212,31 +212,8 @@ namespace AstreaArchipelago
             return;
         }
 
-        static void RestoreRewards(EndOfBattleState __instance)
-        {
-            Logger.LogInfo($"end of battle postfix called");
-
-            NodeEnum e = __instance.mapHandler.CurrentNodeData.NodeEnum;
-            if (e != NodeEnum.BATTLENORMAL && e != NodeEnum.BATTLEHARD && e != NodeEnum.BATTLEBOSS)
-            {
-                Logger.LogInfo($"not a battle node, skip returning rewards");
-                return;
-            }
-
-            if (storedRewards == null)
-            {
-                Logger.LogInfo($"no stored rewards?");
-                return;
-            }
-
-            Logger.LogInfo($"attempting to return old rewards");
-
-            __instance.mapHandler.currentReward.rewards = storedRewards;
-            storedRewards = null;
-            return;
-
-        }
-
+        [HarmonyPatch(typeof(EndOfBattleState), "AllRewardsCollectedGoToMapOrToAstreasGate")]
+        [HarmonyPostfix]
         public static void CreateArchipelagoUI()
         {
             if (APState.ArchipelagoUI != null)
