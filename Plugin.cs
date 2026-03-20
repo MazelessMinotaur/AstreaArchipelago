@@ -51,13 +51,19 @@ namespace AstreaArchipelago
 
         static GameObject apui = null;
 
+        internal static APSaveData saveData;
+
         private void Awake()
-        {
+        {            
             // Plugin startup logic
             Logger = base.Logger;
             Logger.LogInfo($"Plugin {MyPluginInfo.PLUGIN_GUID} is loaded!");
 
             Logger.LogInfo($"Beginning patching, Good luck :)");
+
+            saveData = new APSaveData(Config);
+
+
             Harmony.CreateAndPatchAll(typeof(Plugin));
             Logger.LogInfo($"Main patch done");
             if (true)
@@ -101,6 +107,7 @@ namespace AstreaArchipelago
                 Logger.LogInfo("running item received helper");
                 ItemInfo item = session.Items.DequeueItem();
                 ReceiveItem(item);
+                Plugin.saveData.OnItemReceived(session.Items.Index);
                 receivedItemsHelper.DequeueItem();
                 Logger.LogInfo("done receving?");
 
@@ -161,6 +168,7 @@ namespace AstreaArchipelago
             pendingRewards.Enqueue(reward);
 
             Logger.LogInfo($"pending reward size ${pendingRewards.Count()}");
+
         }
 
         static Reward BuildRewardFromItem(ItemInfo item)
@@ -201,8 +209,10 @@ namespace AstreaArchipelago
                 storedRewards = state.mapHandler.currentReward.rewards;
             }
 
-            var tempList = state.mapHandler.currentReward.rewards.ToList();
-            while(pendingRewards.Any())
+            //var tempList = state.mapHandler.currentReward.rewards.ToList();
+            var tempList = new List<Reward>();
+
+            while (pendingRewards.Any())
             {
                 tempList.Add(pendingRewards.Dequeue());
             }
@@ -214,6 +224,31 @@ namespace AstreaArchipelago
 
         [HarmonyPatch(typeof(EndOfBattleState), "AllRewardsCollectedGoToMapOrToAstreasGate")]
         [HarmonyPostfix]
+        static void AllRewardsCollectedGoToMapOrToAstreasGate(EndOfBattleState __instance)
+        {
+            Logger.LogInfo($"end of battle postfix called");
+
+            NodeEnum e = __instance.mapHandler.CurrentNodeData.NodeEnum;
+            if (e != NodeEnum.BATTLENORMAL && e != NodeEnum.BATTLEHARD && e != NodeEnum.BATTLEBOSS)
+            {
+                Logger.LogInfo($"not a battle node, skip returning rewards");
+                return;
+            }
+
+
+            if (storedRewards == null)
+            {
+                Logger.LogInfo($"no stored rewards?");
+                return;
+            }
+
+            Logger.LogInfo($"attempting to return old rewards");
+
+            __instance.mapHandler.currentReward.rewards = storedRewards;
+            storedRewards = null;
+            return;
+        }
+
         public static void CreateArchipelagoUI()
         {
             if (APState.ArchipelagoUI != null)

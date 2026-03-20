@@ -1,5 +1,6 @@
 ﻿using Archipelago.MultiClient.Net.Models;
 using Astrea;
+using Astrea.GameStates;
 using BepInEx.Logging;
 using System;
 using System.Collections.Generic;
@@ -104,6 +105,14 @@ namespace AstreaArchipelago.src
                 rewardMap[r[i].GetRewardName()] = r[i];
                 Logger.LogInfo($"reward list, checking {r[i].RewardName}, getting {r[i].GetRewardName()}");
             }
+        }
+
+        public void RestoreNodeRewards(EndOfBattleState __instance)
+        {
+            NodeEnum e = __instance.mapHandler.CurrentNodeData.NodeEnum;
+
+            //if ()
+            //__instance.mapHandler.currentReward.rewards = 
         }
 
         // lots of testing to get node rewards stored right

@@ -41,10 +41,23 @@ namespace AstreaArchipelago.src.Archipelago
 
                 bool submit = Event.current.type == EventType.KeyDown && Event.current.keyCode == KeyCode.Return;
 
-                APState.ServerConnectInfo.host_name = GUI.TextField(new Rect(150 + 16 + 8, 36, 150, 20),
-                    APState.ServerConnectInfo.host_name);
-                APState.ServerConnectInfo.slot_name = GUI.TextField(new Rect(150 + 16 + 8, 56, 150, 20),
-                    APState.ServerConnectInfo.slot_name);
+                string displayHost = APState.ServerConnectInfo.host_name;
+                if (string.IsNullOrEmpty(displayHost))
+                {
+                    displayHost = Plugin.saveData.LastServer;
+                }
+
+                string displaySlot = APState.ServerConnectInfo.slot_name;
+                if (string.IsNullOrEmpty(displaySlot))
+                {
+                    displaySlot = Plugin.saveData.LastUsername;
+                }
+
+                APState.ServerConnectInfo.host_name = GUI.TextField(
+                    new Rect(150 + 16 + 8, 36, 150, 20), displayHost);
+
+                APState.ServerConnectInfo.slot_name = GUI.TextField(
+                    new Rect(150 + 16 + 8, 56, 150, 20), displaySlot);
                 APState.ServerConnectInfo.password = GUI.TextField(new Rect(150 + 16 + 8, 76, 150, 20),
                     APState.ServerConnectInfo.password);
 
@@ -57,6 +70,7 @@ namespace AstreaArchipelago.src.Archipelago
                 if ((GUI.Button(new Rect(16, 96, 100, 20), "Connect") || submit) && APState.ServerConnectInfo.Valid)
                 {
                     APState.Connect();
+                    Plugin.saveData.OnConnect(displayHost, displaySlot);
                 }
             } else if (APState.state == APState.State.InGame && APState.Session != null)// && Player.main != null)
             {
